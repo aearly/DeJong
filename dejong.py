@@ -1,4 +1,4 @@
-import sys, math, png
+import sys, math, png, random
 
 # the dejung constants, chosen randomly
 a = 0.0234
@@ -9,8 +9,8 @@ d = -b
 # the dejung iteration
 def next_point(x, y):
 	global a, b, c, d
-	x1 = math.sin(y * a) - math.cos(x * b)
-	y1 = math.sin(x * c) - math.cos(y * d)
+	x1 = math.sin(y * a) - math.cos(x * b) + random.uniform(-0.001, 0.001)
+	y1 = math.sin(x * c) - math.cos(y * d) + random.uniform(-0.001, 0.001)
 	return (x1, y1)
 
 def expose(buffer, width, x, y):
@@ -32,7 +32,7 @@ def de_jung(width, run_size, iterations):
 			if iter == 5 and i == 124:
 				print point
 			expose(buffer, width, int(point[0]), int(point[1]))
-
+		print iter + " ",
 	return buffer
 
 buffer = de_jung(width, run_size, iterations)
