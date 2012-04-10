@@ -1,3 +1,5 @@
 *.png
 *.exe
+*.stackdump
+*.dat
 dejong

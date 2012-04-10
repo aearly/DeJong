@@ -59,27 +59,30 @@ void expose_pixel(int width, double distance,
 	c[2] = lerp(c1[2], c2[2], distance);
 
 	// update buffer
-	buffer[((by  )*width + (bx  ) * 3) + 0] = xy * c[0];
-	buffer[((by  )*width + (bx  ) * 3) + 1] = xy * c[1];
-	buffer[((by  )*width + (bx  ) * 3) + 2] = xy * c[2];
+	buffer[(((by  )*width + (bx  )) * 3) + 0] += xy * c[0];
+	buffer[(((by  )*width + (bx  )) * 3) + 1] += xy * c[1];
+	buffer[(((by  )*width + (bx  )) * 3) + 2] += xy * c[2];
 
-	buffer[((by  )*width + (bx+1) * 3) + 0] = x1y * c[0];
-	buffer[((by  )*width + (bx+1) * 3) + 1] = x1y * c[1];
-	buffer[((by  )*width + (bx+1) * 3) + 2] = x1y * c[2];
+	buffer[(((by  )*width + (bx+1)) * 3) + 0] += x1y * c[0];
+	buffer[(((by  )*width + (bx+1)) * 3) + 1] += x1y * c[1];
+	buffer[(((by  )*width + (bx+1)) * 3) + 2] += x1y * c[2];
 
-	buffer[((by+1)*width + (bx  ) * 3) + 0] = xy1 * c[0];
-	buffer[((by+1)*width + (bx  ) * 3) + 1] = xy1 * c[1];
-	buffer[((by+1)*width + (bx  ) * 3) + 2] = xy1 * c[2];
+	buffer[(((by+1)*width + (bx  )) * 3) + 0] += xy1 * c[0];
+	buffer[(((by+1)*width + (bx  )) * 3) + 1] += xy1 * c[1];
+	buffer[(((by+1)*width + (bx  )) * 3) + 2] += xy1 * c[2];
 
-	buffer[((by+1)*width + (bx+1) * 3) + 0] = x1y1 * c[0];
-	buffer[((by+1)*width + (bx+1) * 3) + 1] = x1y1 * c[1];
-	buffer[((by+1)*width + (bx+1) * 3) + 2] = x1y1 * c[2];
+	buffer[(((by+1)*width + (bx+1)) * 3) + 0] += x1y1 * c[0];
+	buffer[(((by+1)*width + (bx+1)) * 3) + 1] += x1y1 * c[1];
+	buffer[(((by+1)*width + (bx+1)) * 3) + 2] += x1y1 * c[2];
 }
 
 void de_jong()
 {
 	// buffer is a width x width RGB array of doubles
 	buffer = malloc(width * width * 3 * sizeof(double));
+	for(int i = 0; i < width*width*3; i++)
+		buffer[i] = 1.0;
+
 	double w2 = ((double)width)/2.0;
 	double w5 = ((double)width)/5.0;
 	double rw2 = 1.0 / ((double)width * 2);
@@ -103,8 +106,11 @@ int main (int argc, char **argv)
 	c = -a;
 	d = -b;
 	de_jong();
-	printf("Done interating. Writing to file...\n");
-	// TODO: Output to file
-	
+	printf("Done iterating. Writing to file...\n");
+	// Output to file
+	FILE *fp = fopen("out.dat", "wb");
+	fwrite(buffer, sizeof(double), width * width * 3, fp);
+	fclose(fp);
+
 	return 0;
 }
