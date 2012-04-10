@@ -8,4 +8,4 @@ TODO
 
 * optimize (use pypy?)
 * make parameters not hardcoded
-* possibly convert core to C
+* make the new C core output to PNG

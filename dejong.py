@@ -58,9 +58,9 @@ def expose(width, distance, x, y):
 
 width = 1024
 run_size = 1024
-iterations = 1024 * 10240
+iterations = 1024 * 102400
 
-def de_jung(width, run_size, iterations):
+def de_jong(width, run_size, iterations):
 	global rbuffer, gbuffer, bbuffer
 	rbuffer = [[1] * width for i in range(width)]
 	gbuffer = [[1] * width for i in range(width)]
@@ -78,7 +78,7 @@ def de_jung(width, run_size, iterations):
 			expose(width, distance, *point)
 			lastpoint = point
 
-de_jung(width, run_size, iterations)
+de_jong(width, run_size, iterations)
 
 # find red normalization
 rmaxval = []
