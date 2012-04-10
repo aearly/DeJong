@@ -3,7 +3,8 @@ DeJong Playground
 
 Just a place for me to mess around with de Jong attractors.
 
-==TODO==
+TODO
+---------
 
 * optimize (use pypy?)
 * make parameters not hardcoded
