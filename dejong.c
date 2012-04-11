@@ -6,15 +6,15 @@
  */
 
 // the dejung constants, chosen randomly
-double a = 0.0234;
-double b = -0.01245;
+double a = 0.0134;
+double b = -0.00743;
 double c, d;
 // buffer for image data
 double *buffer;
 // how big
 int width = 1024;
 // how many iterations
-int iterations = 1024 * 1024 * 100;
+int iterations = 1024 * 1024 * 1000;
 // pretty colors to use
 double c1[3] = {1.0, 0.0, 1.0};
 double c2[3] = {0.0, 1.0, 1.0};
@@ -91,7 +91,7 @@ void de_jong()
 
 	for(uint i = 0; i < iterations; i++)
 	{
-		next_point(x, y, &x, &y);
+		next_point(lastx, lasty, &x, &y);
 		x = x * w5 + w2;
 		y = y * w5 + w2;
 		distance = (fabs(x - lastx) + fabs(y - lasty)) * rw2;

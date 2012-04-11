@@ -11,12 +11,16 @@ maxval = 0.0
 for i in range(0, width*width*3*8, 8):
 	val = struct.unpack("d", chunk[i : i+8])[0]
 	buffer.append(val)
-	if val > maxval: val = maxval
+	if val > maxval: maxval = val
 
 print "file read, writing to png"
 print "maxval: %d" % maxval
 
-logscale = 255.0 / math.log(maxval)
+try:
+	logscale = 255.0 / math.log(maxval)
+except:
+	print "Domain error: %d" % maxval
+	sys.exit(1)
 
 buffer = map(lambda x: int(math.log(math.fabs(x) + 1) * logscale), buffer)
 
