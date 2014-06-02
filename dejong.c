@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <png.h>
+
 /*
  * Good ol' globals
  */
@@ -26,7 +28,7 @@ double lerp(double a, double b, double t)
 }
 
 // the dejung iteration
-void next_point(double x, double y, 
+void next_point(double x, double y,
                   double *x1, double *y1)
 {
 	*x1 = sin(y * a) - cos(x * b);
@@ -36,7 +38,7 @@ void next_point(double x, double y,
 void expose_pixel(int width, double distance,
 	              double x, double y)
 {
-	// the floor of the values, to use as the 
+	// the floor of the values, to use as the
 	// array indexes
 	int bx = (int)x;
 	int by = (int)y;
@@ -51,7 +53,7 @@ void expose_pixel(int width, double distance,
 	double x1y = xc * (1 - yc);
 	double x1y1 = xc * yc;
 
-	// interpolate the color based on the 
+	// interpolate the color based on the
 	// distance param
 	double c[3];
 	c[0] = lerp(c1[0], c2[0], distance);

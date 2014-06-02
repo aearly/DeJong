@@ -1,2 +1,5 @@
+GCC_OPTS = -O3 -D_GNU_SOURCE -std=c99 -Wall
+
+
 dejong: dejong.c
-	gcc -O3 -std=c99 -Wall -lm dejong.c -o dejong
+	gcc $(GCC_OPTS) dejong.c -o dejong -lm
