@@ -21,6 +21,8 @@ char *outfile = "out.png";
 int width = 1024;
 // how many iterations
 int iterations = 1024 * 1024 * 1;
+// scale type.  2 = log
+char scale_type = 2;
 // pretty colors to use
 double c1[3] = {1.0, 0.0, 1.0};
 double c2[3] = {0.0, 1.0, 1.0};
@@ -40,11 +42,16 @@ static void set_iterations(command_t* cmd)
   iterations = 1024 * 1024 * atoi(cmd->arg);
 }
 
+static void set_scale_type(command_t* cmd)
+{
+  scale_type = atoi(cmd->arg);
+}
+
 static void set_outfile(command_t* cmd)
 {
   int filename_len = strlen(cmd->arg);
 
- 	outfile = malloc(sizeof(char) * filename_len);
+   outfile = malloc(sizeof(char) * filename_len);
 
   memcpy(outfile, cmd->arg, filename_len);
 }
@@ -59,6 +66,12 @@ void create_wpng(mainprog_info* wpng_info)
 
   wpng_info->infile = NULL;
   wpng_info->outfile = fopen(outfile, "wb");
+
+  if (!wpng_info->outfile) {
+    fprintf(stderr, "couldn't open outfile.\n");
+    exit(1);
+  }
+
   wpng_info->image_data = png_buffer;
   wpng_info->row_pointers = NULL;
   wpng_info->filter = FALSE;
@@ -154,23 +167,52 @@ void de_jong()
 
 void normalize_buffer()
 {
-	double max = 0;
-	long buffer_size = width * width * 3;
-	double scale_factor;
+  uch scale_linear(double v) {
+    return (uch)(255.0 * v);
+  }
 
-	for(uint i = 0; i < buffer_size; i++) {
-		if (buffer[i] > max) {
-			max = buffer[i];
-		}
-	}
+  uch scale_quad(double v) {
+    return (uch)(255.0 * sqrt(v));
+  }
 
-	scale_factor = 255.0 / (float)max;
+  uch scale_log(double v) {
+    return (uch)((255.0 / log(2)) * log(v + 1));
+  }
 
-	png_buffer = malloc(buffer_size * sizeof(uch));
+  uch scale_log10(double v) {
+    return (uch)((255.0 / log(3)) * log(v * 2 + 1));
+  }
 
-	for (uint i = 0; i < buffer_size; i++) {
-		png_buffer[i] = (uch)((double)buffer[i] * scale_factor);
-	}
+  double max = 0;
+  long buffer_size = width * width * 3;
+  double scale_factor;
+  uch (*scale)(double);
+
+  switch (scale_type) {
+  case 0:
+    scale = &scale_linear; break;
+  case 1:
+    scale = &scale_quad; break;
+  case 3:
+    scale = &scale_log10; break;
+  case 2:
+  default:
+    scale = &scale_log;
+  }
+
+  for(uint i = 0; i < buffer_size; i++) {
+    if (buffer[i] > max) {
+      max = buffer[i];
+    }
+  }
+
+  scale_factor = 1.0 / (float)max;
+
+  png_buffer = malloc(buffer_size * sizeof(uch));
+
+  for (uint i = 0; i < buffer_size; i++) {
+    png_buffer[i] = (*scale)(buffer[i] * scale_factor);
+  }
 }
 
 void write_png()
@@ -185,9 +227,9 @@ void write_png()
   uch* row = png_buffer;
 
   for (uint i = 0; i < width; i++) {
-  	wpng_info.image_data = row;
-  	writepng_encode_row(&wpng_info);
-  	row += width * 3 * sizeof(uch);
+    wpng_info.image_data = row;
+    writepng_encode_row(&wpng_info);
+    row += width * 3 * sizeof(uch);
   }
 
   writepng_encode_finish(&wpng_info);
@@ -203,6 +245,7 @@ int main (int argc, char **argv)
   command_option(&cmd, "-b", "--b [b]", "DeJong 'b' constant", set_b);
   command_option(&cmd, "-i", "--iterations [n]", "iteration factor", set_iterations);
   command_option(&cmd, "-o", "--outfile [file]", "output file", set_outfile);
+  command_option(&cmd, "-s", "--scaletype [n]", "scaling type. 0 = linear, 1 = quad, 2 = log", set_scale_type);
   command_parse(&cmd, argc, argv);
 
   c = -a;
