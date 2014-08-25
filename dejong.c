@@ -11,8 +11,8 @@
  */
 
 // the dejung constants, chosen randomly
-double a = 0.0134;
-double b = -0.00743;
+double a = 3.4;
+double b = -5.43;
 double c, d;
 // buffer for image data
 double *buffer;
@@ -41,6 +41,11 @@ static void set_b(command_t* cmd)
 static void set_iterations(command_t* cmd)
 {
   iterations = 1024 * 1024 * atoi(cmd->arg);
+}
+
+static void set_width(command_t* cmd)
+{
+  width = atoi(cmd->arg);
 }
 
 static void set_scale_type(command_t* cmd)
@@ -98,71 +103,74 @@ void next_point(double x, double y,
   *y1 = sin(x * c) - cos(y * d);
 }
 
-void expose_pixel(int width, double distance,
-                double x, double y)
-{
-  // the floor of the values, to use as the
-  // array indexes
-  int bx = (int)x;
-  int by = (int)y;
-
-  // The remainder
-  double xc = x - (double)bx;
-  double yc = y - (double)by;
-
-  // calculate the partial pixel values
-  double xy = (1 - xc) * (1 - yc);
-  double xy1 = (1 - xc) * yc;
-  double x1y = xc * (1 - yc);
-  double x1y1 = xc * yc;
-
-  // interpolate the color based on the
-  // distance param
-  double c[3];
-  c[0] = lerp(c1[0], c2[0], distance);
-  c[1] = lerp(c1[1], c2[1], distance);
-  c[2] = lerp(c1[2], c2[2], distance);
-
-  // update buffer
-  buffer[(((by  )*width + (bx  )) * 3) + 0] += xy * c[0];
-  buffer[(((by  )*width + (bx  )) * 3) + 1] += xy * c[1];
-  buffer[(((by  )*width + (bx  )) * 3) + 2] += xy * c[2];
-
-  buffer[(((by  )*width + (bx+1)) * 3) + 0] += x1y * c[0];
-  buffer[(((by  )*width + (bx+1)) * 3) + 1] += x1y * c[1];
-  buffer[(((by  )*width + (bx+1)) * 3) + 2] += x1y * c[2];
-
-  buffer[(((by+1)*width + (bx  )) * 3) + 0] += xy1 * c[0];
-  buffer[(((by+1)*width + (bx  )) * 3) + 1] += xy1 * c[1];
-  buffer[(((by+1)*width + (bx  )) * 3) + 2] += xy1 * c[2];
-
-  buffer[(((by+1)*width + (bx+1)) * 3) + 0] += x1y1 * c[0];
-  buffer[(((by+1)*width + (bx+1)) * 3) + 1] += x1y1 * c[1];
-  buffer[(((by+1)*width + (bx+1)) * 3) + 2] += x1y1 * c[2];
-}
 
 void de_jong()
 {
+
+  double w2 = ((double)width)/2.0;
+  double w5 = ((double)width)/5.0;
+  double lastx, lasty, x, y, distance;
+
+  void expose_pixel()
+  {
+    // scale to fit the dimennsions of the image
+    int sx = x * w5 + w2;
+    int sy = y * w5 + w2;
+
+    // the floor of the values, to use as the
+    // array indexes
+    int bx = (int)sx;
+    int by = (int)sy;
+
+    // The remainder
+    double xc = sx - (double)bx;
+    double yc = sy - (double)by;
+
+    // calculate the partial pixel values
+    double xy = (1 - xc) * (1 - yc);
+    double xy1 = (1 - xc) * yc;
+    double x1y = xc * (1 - yc);
+    double x1y1 = xc * yc;
+
+    // interpolate the color based on the
+    // distance param
+    double c[3];
+    c[0] = lerp(c1[0], c2[0], distance);
+    c[1] = lerp(c1[1], c2[1], distance);
+    c[2] = lerp(c1[2], c2[2], distance);
+
+    // update buffer
+    buffer[(((by  )*width + (bx  )) * 3) + 0] += xy * c[0];
+    buffer[(((by  )*width + (bx  )) * 3) + 1] += xy * c[1];
+    buffer[(((by  )*width + (bx  )) * 3) + 2] += xy * c[2];
+
+    buffer[(((by  )*width + (bx+1)) * 3) + 0] += x1y * c[0];
+    buffer[(((by  )*width + (bx+1)) * 3) + 1] += x1y * c[1];
+    buffer[(((by  )*width + (bx+1)) * 3) + 2] += x1y * c[2];
+
+    buffer[(((by+1)*width + (bx  )) * 3) + 0] += xy1 * c[0];
+    buffer[(((by+1)*width + (bx  )) * 3) + 1] += xy1 * c[1];
+    buffer[(((by+1)*width + (bx  )) * 3) + 2] += xy1 * c[2];
+
+    buffer[(((by+1)*width + (bx+1)) * 3) + 0] += x1y1 * c[0];
+    buffer[(((by+1)*width + (bx+1)) * 3) + 1] += x1y1 * c[1];
+    buffer[(((by+1)*width + (bx+1)) * 3) + 2] += x1y1 * c[2];
+  }
+
   // buffer is a width x width RGB array of doubles
   buffer = malloc(width * width * 3 * sizeof(double));
   for(int i = 0; i < width*width*3; i++)
     buffer[i] = 0.0;
 
-  double w2 = ((double)width)/2.0;
-  double w5 = ((double)width)/5.0;
-  double rw2 = 1.0 / ((double)width * 2);
-  double lastx, lasty, x, y, distance;
   lastx = lasty = x = y = 0.0;
 
   for(uint i = 0; i < iterations; i++)
   {
     next_point(lastx, lasty, &x, &y);
-    x = x * w5 + w2;
-    y = y * w5 + w2;
-    distance = (fabs(x - lastx) + fabs(y - lasty)) * rw2;
-    expose_pixel(width, distance, x, y);
+    distance = (fabs(x - lastx) + fabs(y - lasty)) / 8.0;
     lastx = x;
     lasty = y;
+    expose_pixel();
   }
 }
 
@@ -207,6 +215,8 @@ void normalize_buffer()
     }
   }
 
+  printf("Max value: %20.3f\n", max);
+
   scale_factor = 1.0 / (float)max;
 
   png_buffer = malloc(buffer_size * sizeof(uch));
@@ -245,8 +255,10 @@ int main (int argc, char **argv)
   command_option(&cmd, "-a", "--a [a]", "DeJong 'a' constant", set_a);
   command_option(&cmd, "-b", "--b [b]", "DeJong 'b' constant", set_b);
   command_option(&cmd, "-i", "--iterations [n]", "iteration factor", set_iterations);
+  command_option(&cmd, "-w", "--width [n]", "width (and height)", set_width);
   command_option(&cmd, "-o", "--outfile [file]", "output file", set_outfile);
-  command_option(&cmd, "-s", "--scaletype [n]", "scaling type. 0 = linear, 1 = quad, 2 = log", set_scale_type);
+  command_option(&cmd, "-s", "--scaletype [n]", "scaling type. "
+    "0 = linear, 1 = quad, 2 = log", set_scale_type);
   command_parse(&cmd, argc, argv);
 
   c = -a;
@@ -259,7 +271,8 @@ int main (int argc, char **argv)
 
 
   time = clock() - time;
-  printf("Done iterating. Elapsed time: %dms\n", (int)((double)time / ((double)CLOCKS_PER_SEC / 1000.0f)));
+  printf("Done iterating. Elapsed time: %dms\n",
+    (int)((double)time / ((double)CLOCKS_PER_SEC / 1000.0f)));
   printf("Normalizing...\n");
   normalize_buffer();
 
