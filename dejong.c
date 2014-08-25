@@ -108,7 +108,7 @@ void de_jong()
 {
 
   double w2 = ((double)width)/2.0;
-  double w5 = ((double)width)/5.0;
+  double w5 = ((double)width)/4.0 - 1.0;
   double lastx, lasty, x, y, distance;
 
   void expose_pixel()
@@ -167,7 +167,7 @@ void de_jong()
   for(uint i = 0; i < iterations; i++)
   {
     next_point(lastx, lasty, &x, &y);
-    distance = (fabs(x - lastx) + fabs(y - lasty)) / 8.0;
+    distance = (fabs(x - lastx) + fabs(y - lasty)) / 4.0;
     lastx = x;
     lasty = y;
     expose_pixel();
