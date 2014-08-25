@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include <png.h>
 #include "commander/commander.c"
 #include "writepng/writepng.c"
@@ -253,11 +254,13 @@ int main (int argc, char **argv)
 
   printf("a: %1.3f, b: %1.3f\n", a, b);
 
-
+  clock_t time = clock();
   de_jong();
 
 
-  printf("Done iterating. Normalizing...\n");
+  time = clock() - time;
+  printf("Done iterating. Elapsed time: %dms\n", (int)((double)time / ((double)CLOCKS_PER_SEC / 1000.0f)));
+  printf("Normalizing...\n");
   normalize_buffer();
 
   write_png();
