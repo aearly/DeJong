@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <png.h>
+#include "commander/commander.c"
+#include "writepng/writepng.c"
 
 /*
  * Good ol' globals
@@ -16,10 +18,18 @@ double *buffer;
 // how big
 int width = 1024;
 // how many iterations
-int iterations = 1024 * 1024 * 1000;
+int iterations = 1024 * 1000;
 // pretty colors to use
 double c1[3] = {1.0, 0.0, 1.0};
 double c2[3] = {0.0, 1.0, 1.0};
+
+static void set_a(command_t* cmd) {
+	a = atof(cmd->arg);
+}
+
+static void set_b(command_t* cmd) {
+	b = atof(cmd->arg);
+}
 
 // standard linear interpolation function
 double lerp(double a, double b, double t)
@@ -105,9 +115,21 @@ void de_jong()
 
 int main (int argc, char **argv)
 {
+	command_t cmd;
+	command_init(&cmd, argv[0], "0.0.1");
+	command_option(&cmd, "-a", "--a [a]", "DeJong 'a' constant", set_a);
+	command_option(&cmd, "-b", "--b [b]", "DeJong 'b' constant", set_b);
+	command_parse(&cmd, argc, argv);
+
 	c = -a;
 	d = -b;
+
+	printf("a: %1.3f, b: %1.3f\n", a, b);
+
+
 	de_jong();
+
+
 	printf("Done iterating. Writing to file...\n");
 	// Output to file
 	FILE *fp = fopen("out.dat", "wb");

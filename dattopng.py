@@ -22,7 +22,8 @@ except:
 	print "Domain error: %d" % maxval
 	sys.exit(1)
 
-buffer = map(lambda x: int(math.log(math.fabs(x) + 1) * logscale), buffer)
+
+buffer = map(lambda x: int(math.log(x) * logscale), buffer)
 
 writer = png.Writer(size=(width, width), bitdepth=8)
 writer.write_array(open("out.png", "w"), buffer)
