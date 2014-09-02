@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dejong WebGL</title>
+  <style type="text/css">
+    body {
+      background-color: #222;
+      margin: 0 auto;
+      width: 1024px;
+      color: #aaa;
+      font-family: sans-serif;
+    }
+    #dejong {
+      display: block;
+      margin: 0.5em auto;
+      background-color: #000;
+      box-shadow: 0 0 1em 0 rgba(0, 0, 0, 0.4);
+    }
+
+  </style>
+</head>
+<body>
+  <!-- <h2>Dejong WebGL</h2> -->
+  <canvas id="dejong" width="1024" height="1024"></canvas>
+  <script type="x-shader/x-vertex" id="vertex-shader">
+    uniform mat4 u_matrix;
+    attribute vec4 a_vertex;
+    attribute vec4 a_color;
+    varying vec4 v_color;
+
+    void main() {
+      // Set the size of the point
+      gl_PointSize = 1.0;
+
+      // multiply each vertex by a matrix.
+      gl_Position = u_matrix * a_vertex;
+
+      // pass the color to the fragment shader
+      v_color = a_color;
+    }
+  </script>
+  <script type="x-shader/x-fragment" id="fragment-shader">
+    precision mediump float;
+    varying vec4 v_color;
+    void main() {
+      //float alpha = v_color.a;
+      //gl_FragColor = alpha * v_color;
+      gl_FragColor = v_color;
+    }
+  </script>
+  <script type="text/javascript" src="dejong.js"></script>
+
+</body>
+</html>
