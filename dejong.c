@@ -168,6 +168,8 @@ void de_jong()
   {
     next_point(lastx, lasty, &x, &y);
     distance = (fabs(x - lastx) + fabs(y - lasty)) / 4.0;
+    if (distance < 0) distance = 0;
+    if (distance > 1.0) distance = 1.0;
     lastx = x;
     lasty = y;
     expose_pixel();
