@@ -95,7 +95,7 @@ double lerp(double a, double b, double t)
   return (1-t) * a + b * t;
 }
 
-// the dejung iteration
+// the dejong iteration
 void next_point(double x, double y,
                   double *x1, double *y1)
 {

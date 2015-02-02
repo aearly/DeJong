@@ -3,3 +3,4 @@
 *.stackdump
 *.dat
 dejong
+node_modules

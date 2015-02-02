@@ -1,0 +1,15 @@
+{
+  "name": "dejong-server",
+  "version": "1.0.0",
+  "description": "Simple HTTP interface to the Dejong app",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Alexander Early",
+  "license": "MIT",
+  "dependencies": {
+    "express": "~4.11.2",
+    "express-static": "~1.0.3"
+  }
+}

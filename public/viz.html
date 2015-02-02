@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dejong Viz</title>
+</head>
+<body>
+  <div id="container">
+    <img src="/img?a=1&b=2.1">
+  </div>
+<script type="text/javascript">
+(function () {
+
+  var body = document.body;
+  var img = document.querySelector("#container img");
+
+  body.addEventListener("mousemove", function (e) {
+    updateImg(e.pageX / 200, e.pageY / 200);
+  });
+
+  var updateImg = debounce(function update(a, b) {
+    img.src = "/img?a=" + a + "&b=" + b;
+  }, 200, true);
+
+  function debounce(func, wait, immediate) {
+    var timeout;
+    return function() {
+      var context = this, args = arguments;
+      var later = function() {
+        timeout = null;
+        if (!immediate) func.apply(context, args);
+      };
+      var callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      if (callNow) func.apply(context, args);
+    };
+  }
+
+
+}());
+</script>
+</body>
+</html>
