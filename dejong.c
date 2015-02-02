@@ -191,7 +191,7 @@ void normalize_buffer()
   }
 
   uch scale_log10(double v) {
-    return (uch)((255.0 / log(3)) * log(v * 2 + 1));
+    return (uch)((255.0 / log(scale_type + 1)) * log(v * scale_type + 1));
   }
 
   double max = 0;
@@ -204,11 +204,11 @@ void normalize_buffer()
     scale = &scale_linear; break;
   case 1:
     scale = &scale_quad; break;
-  case 3:
-    scale = &scale_log10; break;
   case 2:
-  default:
     scale = &scale_log;
+  case 3:
+  default:
+    scale = &scale_log10; break;
   }
 
   for(uint i = 0; i < buffer_size; i++) {

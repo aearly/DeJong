@@ -6,12 +6,14 @@
 <body>
   <div id="container">
     <img src="/img?a=1&b=2.1">
+    <div id="ab"></div>
   </div>
 <script type="text/javascript">
 (function () {
 
   var body = document.body;
   var img = document.querySelector("#container img");
+  var ab = document.querySelector("#ab");
 
   window.addEventListener("mousemove", function (e) {
     updateImg(e.pageX / 200, e.pageY / 200);
@@ -19,6 +21,7 @@
 
   var updateImg = debounce(function update(a, b) {
     img.src = "/img?a=" + a + "&b=" + b;
+    ab.innerHTML = "a: " + a + " b: " + b;
   }, 200, true);
 
   function debounce(func, wait, immediate) {
