@@ -23,7 +23,7 @@ int width = 1024;
 // how many iterations
 int iterations = 1024 * 1024 * 1;
 // scale type.  2 = log
-char scale_type = 2;
+int scale_type = 2;
 // pretty colors to use
 double c1[3] = {1.0, 0.0, 1.0};
 double c2[3] = {0.0, 1.0, 1.0};
@@ -254,14 +254,17 @@ int main (int argc, char **argv)
 {
   command_t cmd;
   command_init(&cmd, argv[0], "0.0.1");
-  command_option(&cmd, "-a", "--a [a]", "DeJong 'a' constant", set_a);
-  command_option(&cmd, "-b", "--b [b]", "DeJong 'b' constant", set_b);
+  command_option(&cmd, "-a", "--a <a>", "DeJong 'a' constant", set_a);
+  command_option(&cmd, "-b", "--b <b>", "DeJong 'b' constant", set_b);
   command_option(&cmd, "-i", "--iterations [n]", "iteration factor", set_iterations);
   command_option(&cmd, "-w", "--width [n]", "width (and height)", set_width);
   command_option(&cmd, "-o", "--outfile [file]", "output file", set_outfile);
   command_option(&cmd, "-s", "--scaletype [n]", "scaling type. "
     "0 = linear, 1 = quad, 2 = log", set_scale_type);
   command_parse(&cmd, argc, argv);
+
+  if (cmd.argc > 0) a = atof(cmd.argv[0]);
+  if (cmd.argc > 1) b = atof(cmd.argv[1]);
 
   c = -a;
   d = -b;
