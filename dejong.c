@@ -25,7 +25,7 @@ int iterations = 1024 * 1024 * 1;
 // scale type.  2 = log
 int scale_type = 2;
 // pretty colors to use
-double c1[3] = {1.0, 0.0, 1.0};
+double c1[3] = {1.0, 0.2, 0.0};
 double c2[3] = {0.0, 1.0, 1.0};
 
 static void set_a(command_t* cmd)
@@ -103,13 +103,39 @@ void next_point(double x, double y,
   *y1 = sin(x * c) - cos(y * d);
 }
 
+double cl1[3] = {0.0, 0.0, 1.0};
+double cl2[3] = {1.0, 0.0, 0.0};
+double cl3[3] = {0.0, 1.0, 0.0};
+
+void getColor(double dx, double dy, double* color) {
+  /*double distance = (fabs(dx) + fabs(dy)) / 4.0;
+  if (distance < 0) distance = 0;
+  if (distance > 1.0) distance = 1.0;
+
+  color[0] = lerp(c1[0], c2[0], distance);
+  color[1] = lerp(c1[1], c2[1], distance);
+  color[2] = lerp(c1[2], c2[2], distance);*/
+  double distance = (fabs(dx) + fabs(dy)) / 2.0;
+  if (distance < 0) distance = 0;
+  if (distance > 2.0) distance = 2.0;
+
+  if (distance <= 1.0) {
+    color[0] = lerp(cl1[0], cl2[0], distance);
+    color[1] = lerp(cl1[1], cl2[1], distance);
+    color[2] = lerp(cl1[2], cl2[2], distance);
+  } else {
+    color[0] = lerp(cl2[0], cl3[0], distance - 1.0);
+    color[1] = lerp(cl2[1], cl3[1], distance - 1.0);
+    color[2] = lerp(cl2[2], cl3[2], distance - 1.0);
+  }
+}
 
 void de_jong()
 {
 
   double w2 = ((double)width)/2.0;
   double w5 = ((double)width)/4.0 - 1.0;
-  double lastx, lasty, x, y, distance;
+  double lastx, lasty, x, y, dx, dy;
 
   void expose_pixel()
   {
@@ -135,9 +161,7 @@ void de_jong()
     // interpolate the color based on the
     // distance param
     double c[3];
-    c[0] = lerp(c1[0], c2[0], distance);
-    c[1] = lerp(c1[1], c2[1], distance);
-    c[2] = lerp(c1[2], c2[2], distance);
+    getColor(dx, dy, c);
 
     // update buffer
     buffer[(((by  )*width + (bx  )) * 3) + 0] += xy * c[0];
@@ -167,9 +191,8 @@ void de_jong()
   for(uint i = 0; i < iterations; i++)
   {
     next_point(lastx, lasty, &x, &y);
-    distance = (fabs(x - lastx) + fabs(y - lasty)) / 4.0;
-    if (distance < 0) distance = 0;
-    if (distance > 1.0) distance = 1.0;
+    dx = x - lastx;
+    dy = y - lasty;
     lastx = x;
     lasty = y;
     expose_pixel();
