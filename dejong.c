@@ -6,6 +6,8 @@
 #include "commander/commander.c"
 #include "writepng/writepng.c"
 
+typedef double Double4 __attribute__ ((vector_size (sizeof(double) * 4)));
+
 /*
  * Good ol' globals
  */
@@ -15,7 +17,7 @@ double a = 3.4;
 double b = -5.43;
 double c, d;
 // buffer for image data
-double *buffer;
+Double4 *buffer;
 uch *png_buffer;
 char *outfile = "out.png";
 // how big
@@ -25,8 +27,9 @@ int iterations = 1024 * 1024 * 1;
 // scale type.  2 = log
 int scale_type = 2;
 // pretty colors to use
-double c1[3] = {1.0, 0.2, 0.0};
-double c2[3] = {0.0, 1.0, 1.0};
+Double4 c1 = {1.0, 0.2, 0.0, 1.0};
+Double4 c2 = {0.0, 1.0, 1.0, 1.0};
+Double4 black = {0.0, 0.0, 0.0, 1.0};
 
 static void set_a(command_t* cmd)
 {
@@ -85,13 +88,17 @@ void create_wpng(mainprog_info* wpng_info)
   wpng_info->have_bg = FALSE;
   wpng_info->have_time = FALSE;
   wpng_info->have_text = 0;
-  wpng_info->gamma = 1.0;
+  wpng_info->gamma = 1.0 / 2.2;
 
 }
 
 // standard linear interpolation function
 double lerp(double a, double b, double t)
 {
+  return (1-t) * a + b * t;
+}
+
+Double4 lerp4(Double4 a, Double4 b, double t) {
   return (1-t) * a + b * t;
 }
 
@@ -103,30 +110,27 @@ void next_point(double x, double y,
   *y1 = sin(x * c) - cos(y * d);
 }
 
-double cl1[3] = {0.0, 0.0, 1.0};
-double cl2[3] = {1.0, 0.0, 0.0};
-double cl3[3] = {0.0, 1.0, 0.0};
+Double4 cl1 = {0.0, 0.0, 1.0, 1.0};
+Double4 cl2 = {1.0, 0.0, 0.0, 1.0};
+Double4 cl3 = {0.0, 1.0, 0.0, 1.0};
 
-void getColor(double dx, double dy, double* color) {
-  /*double distance = (fabs(dx) + fabs(dy)) / 4.0;
+Double4 getColor(double dx, double dy) {
+  double distance = (fabs(dx) + fabs(dy)) / 4.0;
   if (distance < 0) distance = 0;
   if (distance > 1.0) distance = 1.0;
 
-  color[0] = lerp(c1[0], c2[0], distance);
-  color[1] = lerp(c1[1], c2[1], distance);
-  color[2] = lerp(c1[2], c2[2], distance);*/
+  return lerp4(c1, c2, distance);
+}
+
+Double4 getColor2(double dx, double dy) {
   double distance = (fabs(dx) + fabs(dy)) / 2.0;
   if (distance < 0) distance = 0;
   if (distance > 2.0) distance = 2.0;
 
   if (distance <= 1.0) {
-    color[0] = lerp(cl1[0], cl2[0], distance);
-    color[1] = lerp(cl1[1], cl2[1], distance);
-    color[2] = lerp(cl1[2], cl2[2], distance);
+    return lerp4(cl1, cl2, distance);
   } else {
-    color[0] = lerp(cl2[0], cl3[0], distance - 1.0);
-    color[1] = lerp(cl2[1], cl3[1], distance - 1.0);
-    color[2] = lerp(cl2[2], cl3[2], distance - 1.0);
+    return lerp4(cl2, cl3, distance);
   }
 }
 
@@ -152,7 +156,7 @@ void de_jong()
     double xc = sx - (double)bx;
     double yc = sy - (double)by;
 
-    // calculate the partial pixel values
+    // calculate the partial pixel intensities
     double xy = (1 - xc) * (1 - yc);
     double xy1 = (1 - xc) * yc;
     double x1y = xc * (1 - yc);
@@ -160,31 +164,26 @@ void de_jong()
 
     // interpolate the color based on the
     // distance param
-    double c[3];
-    getColor(dx, dy, c);
+    Double4 c = getColor(dx, dy);
 
     // update buffer
-    buffer[(((by  )*width + (bx  )) * 3) + 0] += xy * c[0];
-    buffer[(((by  )*width + (bx  )) * 3) + 1] += xy * c[1];
-    buffer[(((by  )*width + (bx  )) * 3) + 2] += xy * c[2];
-
-    buffer[(((by  )*width + (bx+1)) * 3) + 0] += x1y * c[0];
-    buffer[(((by  )*width + (bx+1)) * 3) + 1] += x1y * c[1];
-    buffer[(((by  )*width + (bx+1)) * 3) + 2] += x1y * c[2];
-
-    buffer[(((by+1)*width + (bx  )) * 3) + 0] += xy1 * c[0];
-    buffer[(((by+1)*width + (bx  )) * 3) + 1] += xy1 * c[1];
-    buffer[(((by+1)*width + (bx  )) * 3) + 2] += xy1 * c[2];
-
-    buffer[(((by+1)*width + (bx+1)) * 3) + 0] += x1y1 * c[0];
-    buffer[(((by+1)*width + (bx+1)) * 3) + 1] += x1y1 * c[1];
-    buffer[(((by+1)*width + (bx+1)) * 3) + 2] += x1y1 * c[2];
+    buffer[(by  )*width + bx  ] += xy * c;
+    buffer[(by  )*width + bx+1] += x1y * c;
+    buffer[(by+1)*width + bx  ] += xy1 * c;
+    buffer[(by+1)*width + bx+1] += x1y1 * c;
   }
 
-  // buffer is a width x width RGB array of doubles
-  buffer = malloc(width * width * 3 * sizeof(double));
-  for(int i = 0; i < width*width*3; i++)
-    buffer[i] = 0.0;
+  // buffer is a width x width RGBA array of Double4 vectors
+  printf("Allocating buffer...\n");
+  buffer = aligned_alloc(sizeof(Double4), width * width * sizeof(Double4));
+  printf("Initializing buffer...\n");
+  for(int i = 0; i < width*width; i++) {
+    buffer[i] = black;
+    /*buffer[i][0] = 0.0;
+    buffer[i][1] = 0.0;
+    buffer[i][2] = 0.0;
+    buffer[i][3] = 1.0;*/
+  }
 
   lastx = lasty = x = y = 0.0;
 
@@ -197,6 +196,14 @@ void de_jong()
     lasty = y;
     expose_pixel();
   }
+}
+
+double max4(Double4 vec) {
+  double max = 0;
+  if (vec[0] > max) max = vec[0];
+  if (vec[1] > max) max = vec[1];
+  if (vec[2] > max) max = vec[2];
+  return max;
 }
 
 void normalize_buffer()
@@ -218,9 +225,11 @@ void normalize_buffer()
   }
 
   double max = 0;
-  long buffer_size = width * width * 3;
+  long buffer_size = width * width;
   double scale_factor;
   uch (*scale)(double);
+  Double4 color;
+  double colorMax;
 
   switch (scale_type) {
   case 0:
@@ -235,8 +244,10 @@ void normalize_buffer()
   }
 
   for(uint i = 0; i < buffer_size; i++) {
-    if (buffer[i] > max) {
-      max = buffer[i];
+    color = buffer[i];
+    colorMax = max4(color);
+    if (colorMax > max) {
+      max = colorMax;
     }
   }
 
@@ -244,10 +255,13 @@ void normalize_buffer()
 
   scale_factor = 1.0 / (float)max;
 
-  png_buffer = malloc(buffer_size * sizeof(uch));
+  png_buffer = malloc(buffer_size * 3 * sizeof(uch));
 
   for (uint i = 0; i < buffer_size; i++) {
-    png_buffer[i] = (*scale)(buffer[i] * scale_factor);
+    color = buffer[i];
+    png_buffer[i * 3 + 0] = (*scale)(color[0] * scale_factor);
+    png_buffer[i * 3 + 1] = (*scale)(color[1] * scale_factor);
+    png_buffer[i * 3 + 2] = (*scale)(color[2] * scale_factor);
   }
 }
 
