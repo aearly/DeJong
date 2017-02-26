@@ -12,7 +12,7 @@ typedef double Double4 __attribute__ ((vector_size (sizeof(double) * 4)));
  * Good ol' globals
  */
 
-// the dejung constants, chosen randomly
+// the dejong constants, chosen randomly
 double a = 3.4;
 double b = -5.43;
 double c, d;
@@ -63,6 +63,47 @@ static void set_outfile(command_t* cmd)
    outfile = malloc(sizeof(char) * filename_len);
 
   memcpy(outfile, cmd->arg, filename_len);
+}
+
+Double4 parse_color(const char* arg) {
+  int color_len = strlen(arg);
+  Double4 color;
+  char r[3] = "00";
+  char g[3] = "00";
+  char b[3] = "00";
+
+  if (color_len == 6) {
+    r[0] = arg[0];
+    r[1] = arg[1];
+    g[0] = arg[2];
+    g[1] = arg[3];
+    b[0] = arg[4];
+    b[1] = arg[5];
+  } else if (color_len == 3) {
+    r[0] = arg[0];
+    r[1] = arg[0];
+    g[0] = arg[1];
+    g[1] = arg[1];
+    b[0] = arg[2];
+    b[1] = arg[2];
+  } else {
+    printf("Invalid color: %s\n", arg);
+    exit(1);
+  }
+
+  color[0] = (double)strtol(r, NULL, 16) / 255.0;
+  color[1] = (double)strtol(g, NULL, 16) / 255.0;
+  color[2] = (double)strtol(b, NULL, 16) / 255.0;
+  return color;
+}
+
+static void set_color1(command_t* cmd)
+{
+  c1 = parse_color(cmd->arg);
+}
+static void set_color2(command_t* cmd)
+{
+  c2 = parse_color(cmd->arg);
 }
 
 void create_wpng(mainprog_info* wpng_info)
@@ -153,17 +194,24 @@ void de_jong()
     int by = (int)sy;
 
     // The remainder
-    double xc = sx - (double)bx;
-    double yc = sy - (double)by;
+    double xr = sx - (double)bx;
+    double yr = sy - (double)by;
+
+    // 1 - remainder
+    double xr1 = 1.0 - xr;
+    double yr1 = 1.0 - yr;
 
     // calculate the partial pixel intensities
-    double xy = (1 - xc) * (1 - yc);
-    double xy1 = (1 - xc) * yc;
-    double x1y = xc * (1 - yc);
-    double x1y1 = xc * yc;
+    double xy   = 1 - (xr *xr  + yr *yr ) / 2;
+    double xy1  = 1 - (xr *xr  + yr1*yr1) / 2;
+    double x1y  = 1 - (xr1*xr1 + yr *yr ) / 2;
+    double x1y1 = 1 - (xr1*xr1 + yr1*yr1) / 2;
+    /*double xy = xr * yr;
+    double xy1 = xr * yr1;
+    double x1y = xr1 * yr;
+    double x1y1 = xr1 * yr1;*/
 
-    // interpolate the color based on the
-    // distance param
+    // interpolate the color based on the distance param
     Double4 c = getColor(dx, dy);
 
     // update buffer
@@ -179,10 +227,6 @@ void de_jong()
   printf("Initializing buffer...\n");
   for(int i = 0; i < width*width; i++) {
     buffer[i] = black;
-    /*buffer[i][0] = 0.0;
-    buffer[i][1] = 0.0;
-    buffer[i][2] = 0.0;
-    buffer[i][3] = 1.0;*/
   }
 
   lastx = lasty = x = y = 0.0;
@@ -297,7 +341,11 @@ int main (int argc, char **argv)
   command_option(&cmd, "-w", "--width [n]", "width (and height)", set_width);
   command_option(&cmd, "-o", "--outfile [file]", "output file", set_outfile);
   command_option(&cmd, "-s", "--scaletype [n]", "scaling type. "
-    "0 = linear, 1 = quad, 2 = log", set_scale_type);
+    "0 = linear, 1 = quad, 2 = log, >2 = log base n", set_scale_type);
+  command_option(&cmd, "-c1", "--color1 [rgb]",
+    "CSS-style hex code for color1", set_color1);
+  command_option(&cmd, "-c2", "--color2 [rgb]",
+    "CSS-style hex code for color2", set_color2);
   command_parse(&cmd, argc, argv);
 
   if (cmd.argc > 0) a = atof(cmd.argv[0]);
