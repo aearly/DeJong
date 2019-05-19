@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <zlib.h>
 #include <png.h>
 #include "commander/commander.c"
 #include "writepng/writepng.c"
